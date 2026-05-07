@@ -1,15 +1,6 @@
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
-
-# LOAD NLP MODEL ONCE
-model = SentenceTransformer(
-    "all-MiniLM-L6-v2"
-)
-
-# CENTRALIZED SKILL DATABASE
 SKILL_DB = {
 
-    "cloud": [
+    "Cloud": [
         "aws",
         "azure",
         "gcp",
@@ -17,36 +8,41 @@ SKILL_DB = {
         "lambda"
     ],
 
-    "backend": [
+    "Backend": [
         "python",
         "java",
         "node",
         "api",
         "django",
-        "flask"
+        "flask",
+        "fastapi"
     ],
 
-    "frontend": [
+    "Frontend": [
         "react",
         "html",
         "css",
-        "javascript"
+        "javascript",
+        "tailwind"
     ],
 
-    "devops": [
+    "Devops": [
         "docker",
         "kubernetes",
         "ci/cd",
-        "jenkins"
+        "jenkins",
+        "github actions"
     ],
 
-    "database": [
+    "Database": [
         "sql",
+        "mysql",
         "mongodb",
-        "postgresql"
+        "postgresql",
+        "firebase"
     ],
 
-    "ai_ml": [
+    "AI ML": [
         "machine learning",
         "deep learning",
         "nlp",
@@ -62,7 +58,7 @@ def analyze_resume(
     jd
 ):
 
-    # LOWERCASE NORMALIZATION
+    # NORMALIZATION
 
     resume_text = (
         resume_text.lower()
@@ -70,35 +66,12 @@ def analyze_resume(
 
     jd = jd.lower()
 
-    # SEMANTIC NLP MATCHING
-
-    resume_embedding = (
-        model.encode(
-            [resume_text]
-        )
-    )
-
-    jd_embedding = (
-        model.encode([jd])
-    )
-
-    semantic_similarity = (
-        cosine_similarity(
-            resume_embedding,
-            jd_embedding
-        )[0][0]
-    )
-
-    semantic_score = int(
-        semantic_similarity * 100
-    )
-
     matched_skills = []
     missing_skills = []
 
     section_scores = {}
 
-    total_section_score = 0
+    total_score = 0
     sections_used = 0
 
     # SECTION ANALYSIS
@@ -115,9 +88,8 @@ def analyze_resume(
         ]
 
         if not jd_skills:
-            continue
 
-        sections_used += 1
+            continue
 
         matched = [
 
@@ -159,42 +131,28 @@ def analyze_resume(
             category
         ] = section_score
 
-        total_section_score += (
+        total_score += (
             section_score
         )
 
-    # KEYWORD SCORE
+        sections_used += 1
 
-    keyword_score = int(
+    # FINAL SCORE
 
-        total_section_score
+    overall_score = int(
+
+        total_score
         /
         sections_used
 
     ) if sections_used else 0
 
-    # FINAL HYBRID SCORE
-
-    overall_score = int(
-
-        (
-            semantic_score * 0.5
-        )
-
-        +
-
-        (
-            keyword_score * 0.5
-        )
-
-    )
-
-    # RECOMMENDATION ENGINE
+    # RECOMMENDATION
 
     if overall_score >= 85:
 
         recommendation = (
-            "Strong Fit"
+            "Excellent Fit"
         )
 
     elif overall_score >= 70:
@@ -212,7 +170,7 @@ def analyze_resume(
     else:
 
         recommendation = (
-            "Needs Improvement"
+            "Low Match"
         )
 
     # ROLE ESTIMATION
@@ -235,67 +193,71 @@ def analyze_resume(
             "Junior / Intern"
         )
 
-    # SKILL GROUPING
+    # REMOVE DUPLICATES
 
     strong = list(
+
         dict.fromkeys(
             matched_skills[:6]
         )
+
     )
 
     medium = list(
+
         dict.fromkeys(
             matched_skills[6:12]
         )
+
     )
 
     weak = list(
+
         dict.fromkeys(
             missing_skills[:8]
         )
+
     )
 
-    # AI SUMMARY
+    # SUMMARY
 
     summary = f"""
 Candidate demonstrates strong exposure to {", ".join(strong[:4]) if strong else "relevant technologies"}.
 
 The resume aligns reasonably well with the provided job requirements and modern software engineering expectations.
 
-Semantic NLP analysis indicates a contextual compatibility score of {semantic_score}% while technical keyword alignment contributes a score of {keyword_score}%.
-
 Primary improvement areas include {", ".join(weak[:3]) if weak else "advanced specialization domains"}.
 
 Overall recruiter recommendation for this profile is: {recommendation}.
 """
 
-    # STRENGTHS + GAPS
+    # STRENGTHS
 
     strengths = [
 
         f"Strong understanding of {skill}"
 
         for skill in strong[:5]
+
     ]
+
+    # GAPS
 
     gaps = [
 
         f"Limited exposure to {skill}"
 
         for skill in weak[:5]
+
     ]
 
     return {
 
-        "score": overall_score,
+        "score":
+            overall_score,
 
-        "semantic_score":
-            semantic_score,
-
-        "keyword_score":
-            keyword_score,
-
-        "role": role,
+        "role":
+            role,
 
         "recommendation":
             recommendation,
@@ -305,11 +267,14 @@ Overall recruiter recommendation for this profile is: {recommendation}.
 
         "skills": {
 
-            "strong": strong,
+            "strong":
+                strong,
 
-            "medium": medium,
+            "medium":
+                medium,
 
-            "weak": weak
+            "weak":
+                weak
         },
 
         "section_scores":
